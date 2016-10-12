@@ -20,7 +20,9 @@ module.exports = function(config) {
           debug('subscribing to handler %s', ev);
           channel.subscribe(ev, function(data) {
             debug('got event, calling old emit %s', ev);
-            service._emit.call(service, event, data);
+            var hook = data.hook;
+            delete data.hook;
+            service._emit.call(service, event, data, hook);
           });
         });
       });
@@ -37,9 +39,10 @@ module.exports = function(config) {
 
       // Override an emit that publishes to the hub
       service.mixin({
-        emit: function(ev, data) {
+        emit: function(ev, data, hook) {
           var event = path + ' ' + ev;
           debug('emitting event to channel %s', event);
+          data.hook = hook;
           return channel.publish(event, data);
         }
       });
